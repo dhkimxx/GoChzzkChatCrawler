@@ -1,9 +1,10 @@
 package main
 
 import (
+	"chzzk/api"
 	"chzzk/command"
-	"chzzk/config"
 	"encoding/json"
+	"fmt"
 	"log"
 
 	"github.com/gorilla/websocket"
@@ -57,41 +58,53 @@ type Response struct {
 }
 
 type ResponseBody struct {
-	Svcid         string  `json:"svcid"`
-	Cid           string  `json:"cid"`
-	MbrCnt        int     `json:"mbrCnt"`
-	Uid           string  `json:"uid"`
-	Profile       string  `json:"profile"`
-	Msg           string  `json:"msg"`
-	MsgTypeCode   int     `json:"msgTypeCode"`
-	MsgStatusType string  `json:"msgStatusType"`
-	Extras        string  `json:"extras"`
-	Ctime         int64   `json:"ctime"`
-	Utime         int64   `json:"utime"`
-	MsgTid        *string `json:"msgTid"`
-	MsgTime       int64   `json:"msgTime"`
+	Svcid         string `json:"svcid"`
+	Cid           string `json:"cid"`
+	MbrCnt        int    `json:"mbrCnt"`
+	Uid           string `json:"uid"`
+	Profile       string `json:"profile"`
+	Msg           string `json:"msg"`
+	MsgTypeCode   int    `json:"msgTypeCode"`
+	MsgStatusType string `json:"msgStatusType"`
+	Extras        string `json:"extras"`
+	Ctime         int64  `json:"ctime"`
+	Utime         int64  `json:"utime"`
+	MsgTid        string `json:"msgTid"`
+	MsgTime       int64  `json:"msgTime"`
 }
 
 func main() {
+
 	url := "wss://kr-ss1.chat.naver.com/chat"
 
-	// WebSocket 연결
+	defaultStreamerID := "f00f6d46ecc6d735b96ecf376b9e5212"
+
+	cid, err := api.FetchChatChannelID(defaultStreamerID)
+	if err != nil {
+		panic(fmt.Errorf("failed to fetch chat channel id: %s", err))
+	}
+
+	accTkn, err := api.FetchAccessToken(cid)
+	if err != nil {
+		panic(fmt.Errorf("failed to fetch access token: %s", err))
+	}
+
 	conn, _, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
-		log.Fatal("WebSocket 연결 실패:", err)
+		panic(err)
 	}
+
 	defer conn.Close()
 
-	// 전송할 메시지 구조체 정의
 	request := Request{
 		Ver:   "3",
 		Cmd:   100,
 		Svcid: "game",
-		Cid:   "N1V_SF",
+		Cid:   cid,
 		Bdy: RequestBody{
 			Uid:      nil,
 			DevType:  2001,
-			AccTkn:   config.Config.AccessToken,
+			AccTkn:   accTkn,
 			Auth:     "READ",
 			LibVer:   "4.9.3",
 			OsVer:    "Linux/",
@@ -121,11 +134,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	log.Println(initRes)
 
 	for {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
-			log.Println("메시지 읽기 오류:", err)
+			log.Println("failed to read message:", err)
 			continue
 		}
 		var res Response
@@ -141,12 +155,10 @@ func main() {
 				panic(err)
 			}
 		}
-
-		for i, body := range res.Bdy {
+		for _, body := range res.Bdy {
 			var profile map[string]interface{}
 			json.Unmarshal([]byte(body.Profile), &profile)
-			log.Println(i, profile["nickname"], body.Msg)
+			log.Println(profile["nickname"], ":", body.Msg)
 		}
-
 	}
 }

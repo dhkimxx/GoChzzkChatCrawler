@@ -7,22 +7,14 @@ import (
 )
 
 func main() {
+	streamerId := "75cbf189b3bb8f9f687d2aca0d0a382b"
 
-	defaultStreamerID := "c7ded8ea6b0605d3c78e18650d2df83b"
+	crawlerClient := crawler.NewCrawlerClient(streamerId, 1, func(msg crawler.ChzzkChatMessage) {
+		fmt.Printf("[%d] %s: %s\n", msg.Timestamp, msg.Nickname, msg.Content)
+	})
 
-	crawlerClient := crawler.NewCrawlerClient(defaultStreamerID, 1, nil)
-
-	go func() {
-		crawlerClient.SetMessageHandler(func(msg crawler.ChzzkChatMessage) {
-			fmt.Printf("[%d] %s: %s\n", msg.Timestamp, msg.Nickname, msg.Content)
-		})
-		err := crawlerClient.Run()
-		if err != nil {
-			panic(err)
-		}
-	}()
-
-	for msg := range crawlerClient.ChatChan {
-		fmt.Println("from chan:", msg)
+	err := crawlerClient.Run()
+	if err != nil {
+		panic(err)
 	}
 }

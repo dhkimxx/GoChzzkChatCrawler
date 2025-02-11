@@ -195,12 +195,17 @@ func (crawler *ChzzkChatCrawler) Run() error {
 				}
 
 				/* send to channel */
-				crawler.ChatChan <- msg
+				go func() {
+					crawler.ChatChan <- msg
+				}()
 
 				/* execute callback method of client */
-				if crawler.onMessage != nil {
-					crawler.onMessage(msg)
-				}
+				go func() {
+					if crawler.onMessage != nil {
+						crawler.onMessage(msg)
+					}
+				}()
+
 			}
 		}
 	}

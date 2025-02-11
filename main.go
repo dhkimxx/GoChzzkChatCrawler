@@ -7,7 +7,7 @@ import (
 
 func main() {
 
-	defaultStreamerID := "4d39d99252f247f06de349ccc0d444a7"
+	defaultStreamerID := "e9210c823439e7add5006cb4b93826a0"
 
 	crawler := crawler.NewCrawler(defaultStreamerID, 1)
 

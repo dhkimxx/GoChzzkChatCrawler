@@ -6,7 +6,7 @@ import (
 )
 
 func TestFetchChatChannelID(t *testing.T) {
-	cid, err := api.FetchChatChannelID("7ce8032370ac5121dcabce7bad375ced")
+	cid, err := api.FetchLiveChannelIdOfStreamer("7ce8032370ac5121dcabce7bad375ced")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -14,7 +14,7 @@ func TestFetchChatChannelID(t *testing.T) {
 }
 
 func TestFetchAccessToken(t *testing.T) {
-	accTkn, err := api.FetchAccessToken("N1V_SF")
+	accTkn, err := api.FetchChatAccessToken("N1V_SF")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -22,7 +22,7 @@ func TestFetchAccessToken(t *testing.T) {
 }
 
 func TestFetchChannelName(t *testing.T) {
-	channel, err := api.FetchChannelName("7ce8032370ac5121dcabce7bad375ced")
+	channel, err := api.FetchChennelNameOfStreamer("7ce8032370ac5121dcabce7bad375ced")
 	if err != nil {
 		t.Fatal(err)
 	}

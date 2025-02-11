@@ -97,12 +97,12 @@ func NewCrawler(streamerID string, bufferSize int) ChzzkChatCrawler {
 
 func (crawler *ChzzkChatCrawler) Run() error {
 	defer close(crawler.ChatChan)
-	cid, err := api.FetchChatChannelID(crawler.StreamerID)
+	cid, err := api.FetchLiveChannelIdOfStreamer(crawler.StreamerID)
 	if err != nil {
 		return fmt.Errorf("failed to fetch chat channel id: %s", err)
 	}
 
-	accTkn, err := api.FetchAccessToken(cid)
+	accTkn, err := api.FetchChatAccessToken(cid)
 	if err != nil {
 		return fmt.Errorf("failed to fetch access token: %s", err)
 	}

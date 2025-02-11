@@ -9,24 +9,21 @@ import (
 	"slices"
 )
 
-var HEADERS = map[string]string{
-	"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-}
-
 type httpClient struct {
 	header                 map[string]string
 	acceptedStatusCodeList []int
 }
 
-func NewHttpClient() *httpClient {
-	hc := &httpClient{
-		header:                 HEADERS,
-		acceptedStatusCodeList: []int{200},
-	}
-	return hc
+var HEADERS = map[string]string{
+	"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
 }
 
-func (hc *httpClient) sendRequest(url, method string) ([]byte, error) {
+var hc = &httpClient{
+	header:                 HEADERS,
+	acceptedStatusCodeList: []int{200},
+}
+
+func sendRequest(url, method string) ([]byte, error) {
 	req, err := http.NewRequest(method, url, nil)
 	if err != nil {
 		return nil, err
@@ -57,7 +54,7 @@ func (hc *httpClient) sendRequest(url, method string) ([]byte, error) {
 func FetchLiveChannelIdOfStreamer(streamerId string) (string, error) {
 
 	url, method := url.GetLiveChannelIdOfStreamer(streamerId)
-	body, err := NewHttpClient().sendRequest(url, method)
+	body, err := sendRequest(url, method)
 	if err != nil {
 		return "", err
 	}
@@ -82,7 +79,7 @@ func FetchLiveChannelIdOfStreamer(streamerId string) (string, error) {
 
 func FetchChennelNameOfStreamer(streamerId string) (string, error) {
 	url, method := url.GetChennelNameOfStreamer(streamerId)
-	body, err := NewHttpClient().sendRequest(url, method)
+	body, err := sendRequest(url, method)
 	if err != nil {
 		return "", err
 	}
@@ -103,7 +100,7 @@ func FetchChennelNameOfStreamer(streamerId string) (string, error) {
 
 func FetchChatAccessToken(chatChannelId string) (string, error) {
 	url, method := url.GetChatAccessToken(chatChannelId)
-	body, err := NewHttpClient().sendRequest(url, method)
+	body, err := sendRequest(url, method)
 	if err != nil {
 		return "", err
 	}

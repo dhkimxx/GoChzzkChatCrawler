@@ -3,21 +3,21 @@ package crawler
 import (
 	"chzzk/api"
 	"chzzk/command"
+	"chzzk/url"
 	"encoding/json"
 	"fmt"
 
 	"github.com/gorilla/websocket"
 )
 
-const WS_URL string = "wss://kr-ss1.chat.naver.com/chat"
-
 type ChzzkChatCrawler struct {
-	StreamerID string
+	StreamerId string
 	ChatChan   chan ChzzkChatMessage
+	onMessage  func(ChzzkChatMessage)
 }
 
 type ChzzkChatMessage struct {
-	StreamerID string
+	StreamerId string
 	UserHashID string
 	Nickname   string
 	Content    string
@@ -87,17 +87,22 @@ type wsResponseBody struct {
 	MsgTime       int64  `json:"msgTime"`
 }
 
-func NewCrawler(streamerID string, bufferSize int) ChzzkChatCrawler {
+func NewCrawlerClient(streamerID string, bufferSize int, onMessage func(ChzzkChatMessage)) ChzzkChatCrawler {
 	newCrawler := ChzzkChatCrawler{
-		StreamerID: streamerID,
+		StreamerId: streamerID,
 		ChatChan:   make(chan ChzzkChatMessage, bufferSize),
+		onMessage:  onMessage,
 	}
 	return newCrawler
 }
 
+func (crawler *ChzzkChatCrawler) SetMessageHandler(onMessage func(ChzzkChatMessage)) {
+	crawler.onMessage = onMessage
+}
+
 func (crawler *ChzzkChatCrawler) Run() error {
 	defer close(crawler.ChatChan)
-	cid, err := api.FetchLiveChannelIdOfStreamer(crawler.StreamerID)
+	cid, err := api.FetchLiveChannelIdOfStreamer(crawler.StreamerId)
 	if err != nil {
 		return fmt.Errorf("failed to fetch chat channel id: %s", err)
 	}
@@ -107,13 +112,15 @@ func (crawler *ChzzkChatCrawler) Run() error {
 		return fmt.Errorf("failed to fetch access token: %s", err)
 	}
 
-	conn, _, err := websocket.DefaultDialer.Dial(WS_URL, nil)
+	conn, _, err := websocket.DefaultDialer.Dial(url.ChatChannelWebSocket(), nil)
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
 
-	request := wsConnRequest{
+	conn.CloseHandler()
+
+	wsConnRequestJson, err := json.Marshal(wsConnRequest{
 		Ver:   "3",
 		Cmd:   100,
 		Svcid: "game",
@@ -130,13 +137,13 @@ func (crawler *ChzzkChatCrawler) Run() error {
 			Timezone: "Asia/Seoul",
 		},
 		Tid: 1,
-	}
-	jsonMessage, err := json.Marshal(request)
+	})
+
 	if err != nil {
 		return err
 	}
 
-	err = conn.WriteMessage(websocket.TextMessage, jsonMessage)
+	err = conn.WriteMessage(websocket.TextMessage, wsConnRequestJson)
 	if err != nil {
 		return err
 	}
@@ -160,35 +167,40 @@ func (crawler *ChzzkChatCrawler) Run() error {
 		}
 		var res wsResponse
 		err = json.Unmarshal([]byte(message), &res)
-		if err != nil {
-			return err
-		}
+		if err == nil {
+			if res.Cmd == command.Ping {
+				pongResjson, err := json.Marshal(command.PongInstance)
+				if err != nil {
+					return err
+				}
+				err = conn.WriteMessage(websocket.TextMessage, pongResjson)
+				if err != nil {
+					return err
+				}
+			}
+			for _, body := range res.Bdy {
+				var profile map[string]interface{}
+				err = json.Unmarshal([]byte(body.Profile), &profile)
+				if err != nil {
+					return err
+				}
 
-		if res.Cmd == command.Ping {
-			json, err := json.Marshal(command.PongInstance)
-			if err != nil {
-				return err
-			}
-			err = conn.WriteMessage(websocket.TextMessage, json)
-			if err != nil {
-				return err
-			}
-		}
-		for _, body := range res.Bdy {
-			var profile map[string]interface{}
-			err = json.Unmarshal([]byte(body.Profile), &profile)
-			if err != nil {
-				return err
-			}
+				msg := ChzzkChatMessage{
+					StreamerId: crawler.StreamerId,
+					Content:    body.Msg,
+					Nickname:   profile["nickname"].(string),
+					Timestamp:  body.MsgTime,
+					UserHashID: profile["userIdHash"].(string),
+				}
 
-			msg := ChzzkChatMessage{
-				StreamerID: crawler.StreamerID,
-				Content:    body.Msg,
-				Nickname:   profile["nickname"].(string),
-				Timestamp:  body.MsgTime,
-				UserHashID: profile["userIdHash"].(string),
+				/* send to channel */
+				crawler.ChatChan <- msg
+
+				/* execute callback method of client */
+				if crawler.onMessage != nil {
+					crawler.onMessage(msg)
+				}
 			}
-			crawler.ChatChan <- msg
 		}
 	}
 }

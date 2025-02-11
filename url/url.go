@@ -7,6 +7,7 @@ const (
 	NAVER_GAME_URL = "https://comm-api.game.naver.com"
 )
 
+/* Http Url */
 func GetLiveChannelIdOfStreamer(streamerId string) (url, method string) {
 	return fmt.Sprintf("%s/polling/v2/channels/%s/live-status", CHZZK_BASE_URL, streamerId), "GET"
 }
@@ -17,4 +18,9 @@ func GetChennelNameOfStreamer(streamerId string) (url, method string) {
 
 func GetChatAccessToken(chatChannelId string) (url, method string) {
 	return fmt.Sprintf("%s/nng_main/v1/chats/access-token?channelId=%s&chatType=STREAMING", NAVER_GAME_URL, chatChannelId), "GET"
+}
+
+/* WebSocket Url */
+func ChatChannelWebSocket() string {
+	return "wss://kr-ss1.chat.naver.com/chat"
 }

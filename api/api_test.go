@@ -1,8 +1,9 @@
 package api_test
 
 import (
-	"chzzk/api"
 	"testing"
+
+	"github.com/dhkimxx/GoChzzkChatCrawler/api"
 )
 
 func TestFetchChatChannelID(t *testing.T) {

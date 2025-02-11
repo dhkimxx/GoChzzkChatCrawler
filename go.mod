@@ -1,4 +1,4 @@
-module chzzk
+module github.com/dhkimxx/GoChzzkChatCrawler
 
 go 1.22.2
 

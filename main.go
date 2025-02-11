@@ -1,8 +1,9 @@
 package main
 
 import (
-	"chzzk/crawler"
 	"fmt"
+
+	"github.com/dhkimxx/GoChzzkChatCrawler/crawler"
 )
 
 func main() {

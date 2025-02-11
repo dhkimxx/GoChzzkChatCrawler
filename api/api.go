@@ -1,12 +1,13 @@
 package api
 
 import (
-	"chzzk/url"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"slices"
+
+	"github.com/dhkimxx/GoChzzkChatCrawler/url"
 )
 
 type httpClient struct {

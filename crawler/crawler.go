@@ -1,11 +1,12 @@
 package crawler
 
 import (
-	"chzzk/api"
-	"chzzk/command"
-	"chzzk/url"
 	"encoding/json"
 	"fmt"
+
+	"github.com/dhkimxx/GoChzzkChatCrawler/api"
+	"github.com/dhkimxx/GoChzzkChatCrawler/command"
+	"github.com/dhkimxx/GoChzzkChatCrawler/url"
 
 	"github.com/gorilla/websocket"
 )
